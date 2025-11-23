@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_rag_bot
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Основные настройки
+      - N8N_BASIC_AUTH_ACTIVE=false
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Europe/Moscow
+      
+      # Отключить обязательную регистрацию владельца
+      - N8N_OWNER_SETUP_DISABLED=true
+      
+      # Автоматическая загрузка workflow
+      - N8N_USER_FOLDER=/data
+      
+      # API ключи из .env файла
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - HUGGINGFACE_TOKEN=${HUGGINGFACE_TOKEN}
+      - GOOGLE_DOC_URL=${GOOGLE_DOC_URL}
+      
+    volumes:
+      - ./n8n_data:/data
+    command: start
+
+volumes:
+  n8n_data:
+    driver: local

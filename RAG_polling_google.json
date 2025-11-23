@@ -1,0 +1,494 @@
+{
+  "name": "RAG Telegram Bot (Polling)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "8d804f18-ef54-4f6c-b95f-ad4797a99282",
+      "name": "Poll Every 3 Seconds",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1472,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "telegram_link",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "offset",
+              "value": "-1"
+            },
+            {
+              "name": "timeout",
+              "value": "2"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "832648fe-2fde-4dff-a435-0110fddb0139",
+      "name": "Get Telegram Updates",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1200,
+        528
+      ],
+      "alwaysOutputData": false,
+      "retryOnFail": true,
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Обработка новых сообщений\nconst updates = $input.item.json.result || [];\n\n\nconst messages = [];\nfor (const update of updates) {\n  if (update.message && update.message.text) {\n    messages.push({\n      json: {\n        message: update.message,\n        update_id: update.update_id\n      }\n    });\n  }\n}\n\n// Если обработали сообщения - возвращаем их\nif (messages.length > 0) {\n  return messages;\n}\n\n// Если сообщений нет - возвращаем пустой массив\nreturn [];"
+      },
+      "id": "9518ad99-e799-4e17-9782-ea1dcdb75067",
+      "name": "Process Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -992,
+        528
+      ],
+      "retryOnFail": true,
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "chatId": "=768353663",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "b7b62c27-cea7-41bc-b2a3-73c23c64bd94",
+      "name": "Send Telegram Response",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        528
+      ],
+      "webhookId": "33f3f594-08c2-437b-b052-0902cbf2e2e2",
+      "credentials": {
+        "telegramApi": {
+          "id": "AZQQppeg5p9Baf5s",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "e7b18f3c-ecc7-4d2f-ad2c-ae3186f72bf5",
+      "name": "Recursive Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        -464,
+        1136
+      ]
+    },
+    {
+      "parameters": {
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "ae0f1956-b116-4f95-a9d2-52179a8a11d7",
+      "name": "Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        -256,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        256,
+        592
+      ],
+      "id": "b9d0416c-458a-4a40-babb-ea17b9767017",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "fQChgVfV2nhFXj02",
+          "name": "HuggingFaceApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/index",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "fb18c1e3-0a38-46cd-8845-ee8968cbe49f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Index Document"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ true }}",
+                    "rightValue": true,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true"
+                    },
+                    "id": "6c09837d-56cb-4919-8468-43622d6f13d2"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Answer Question"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "53efa377-61ed-4e45-bc97-921ae8d8003d",
+      "name": "Check Message Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        -464,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://docs.google.com/document/d/1x95jeiKTciR5vpxaaSsnZFVOYRtY5bPo/export?format=txt",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "id": "68dec621-289b-4473-87f3-426363090282",
+      "name": "Download Document for Indexing",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -560,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "id",
+          "value": "document_vectors"
+        }
+      },
+      "id": "b9c2c370-8a0b-47bb-a095-36ab9d16dc8c",
+      "name": "Index Documents",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        -96,
+        688
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Retrieves relevant document chunks from the indexed knowledge base",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "id",
+          "value": "document_vectors"
+        }
+      },
+      "id": "1311c2c2-bf52-4d7d-9108-ed2eb227aaa1",
+      "name": "Query Documents Tool",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant that answers questions based on document content. Use the retrieved document chunks to provide accurate answers.",
+          "maxIterations": 5
+        }
+      },
+      "id": "c2a94397-fc55-4e2f-9650-3122043fbccf",
+      "name": "Question Answering Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        64,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "output-msg",
+              "name": "output",
+              "value": "Document indexed successfully! You can now ask questions about it.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3af230c4-aef7-4252-8404-134e2fa1a16e",
+      "name": "Prepare Index Confirmation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        352,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        432
+      ],
+      "id": "7a0c7d50-c865-4cd9-9129-d59717382edd",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "dnIwMg6zoRd4DkRH",
+          "name": "OpenRouter account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Poll Every 3 Seconds": {
+      "main": [
+        [
+          {
+            "node": "Get Telegram Updates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Telegram Updates": {
+      "main": [
+        [
+          {
+            "node": "Process Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Messages": {
+      "main": [
+        [
+          {
+            "node": "Check Message Type",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Document Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Index Documents",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Index Documents",
+            "type": "ai_embedding",
+            "index": 0
+          },
+          {
+            "node": "Query Documents Tool",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Message Type": {
+      "main": [
+        [
+          {
+            "node": "Download Document for Indexing",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Question Answering Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Document for Indexing": {
+      "main": [
+        [
+          {
+            "node": "Index Documents",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Documents Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Question Answering Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Question Answering Agent": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Index Documents": {
+      "main": [
+        [
+          {
+            "node": "Prepare Index Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Index Confirmation": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question Answering Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aa2b18b7-26b1-45ae-9fe3-312dcf221473",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "add7b521eeaa77cff90edc104c9c7c3ab4116b5e28d80b7eec54c1585893c7cc"
+  },
+  "id": "EGHAgscUFCCiFb7I",
+  "tags": []
+}
