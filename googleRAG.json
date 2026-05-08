@@ -1,0 +1,1112 @@
+{
+  "name": "goglik copy copy copy 2",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "64ede834-eba5-4040-a7ed-d287da06ec30",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2192,
+        -96
+      ],
+      "webhookId": "e97b1557-b454-412c-aa17-789818ed9d99",
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "(mimeType=\"application/pdf\" or mimeType=\"application/vnd.openxmlformats-officedocument.wordprocessingml.document\" or mimeType=\"text/plain\" or mimeType=\"application/vnd.google-apps.document\")",
+        "returnAll": true,
+        "filter": {
+          "driveId": {
+            "__rl": true,
+            "mode": "list",
+            "value": "My Drive"
+          },
+          "folderId": {
+            "__rl": true,
+            "value": "178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp",
+            "mode": "list",
+            "cachedResultName": "pampampam",
+            "cachedResultUrl": "https://drive.google.com/drive/folders/178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp"
+          }
+        },
+        "options": {}
+      },
+      "id": "ec7e3861-a8d2-41e8-a6ff-f6c769abfceb",
+      "name": "Search Google Drive Files",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -832,
+        260
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "EdOAzsdOGCBqFLSp",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "id",
+        "include": "allOtherFields",
+        "options": {}
+      },
+      "id": "a7c59492-1650-46fc-b2d1-8d5092154396",
+      "name": "Split Files",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -544,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "options": {
+          "binaryPropertyName": "data",
+          "googleFileConversion": {
+            "conversion": {
+              "docsToFormat": "text/plain"
+            }
+          }
+        }
+      },
+      "id": "e16771de-ad06-4adc-b74a-27906bb46d1b",
+      "name": "Download File",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        260
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "EdOAzsdOGCBqFLSp",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": {}
+      },
+      "id": "26a1fb64-2a51-4fc6-ad5c-3cc871602339",
+      "name": "Document Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        484
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $(\"Edit Fields Telegram\").item.json.chat_id }}",
+        "text": "=Pinecone vector DB updated! Processed {{ $(\"Search Google Drive Files\").all().length }} documents from Google Drive. Ask your questions!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "edee162f-ee13-4413-a62c-ffde5fce8595",
+      "name": "Send Confirmation",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        68
+      ],
+      "webhookId": "e579575f-6f5d-4b3d-9bc0-588e60d89454",
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        484
+      ],
+      "id": "ed5033d0-38af-46f6-9a4b-9576ff146008",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "TyCFbREWYQVWu5oq",
+          "name": "Hugging Face account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "9903b2a6-c263-4688-9200-e454d6953bfa",
+      "name": "Text Splitter",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        112,
+        692
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "sentence-transformers/paraphrase-multilingual-mpnet-base-v2",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        -2368,
+        1280
+      ],
+      "id": "c57a9a6e-4870-4819-b2d1-f6aad0d6d58c",
+      "name": "Embeddings HuggingFace Inference1",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "TyCFbREWYQVWu5oq",
+          "name": "Hugging Face account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-001",
+        "options": {
+          "temperature": 0.1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1440,
+        1264
+      ],
+      "id": "ade2e03e-3985-4724-9941-b532163e8b5b",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "GLCdKzo52mgJX579",
+          "name": "OpenRouter account 5"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id ?? $json.message?.chat?.id ?? 768353663 }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -832,
+        452
+      ],
+      "id": "fec9e7ef-99d4-43d3-9485-982af5e1744b",
+      "name": "Send a text message",
+      "webhookId": "dd2cd01a-9b1b-43b0-b4bf-f0e94be4724d",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "2049701c-0447-4fe9-a300-c2a56856c723",
+        "responseMode": "responseNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1968,
+        704
+      ],
+      "id": "8d01d2fa-f4b7-4389-938c-3111bdc19970",
+      "name": "Webhook",
+      "webhookId": "6b36dfe6-3506-46a6-8ff2-2cdba24d5548"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Search the knowledge base for relevant information from uploaded documents. Use this tool to find answers to user questions.",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "n8n-dense-index",
+          "mode": "list",
+          "cachedResultName": "n8n-dense-index"
+        },
+        "options": {}
+      },
+      "id": "8e07f675-a103-4f64-9730-8818f87374bf",
+      "name": "Pinecone Retriever Tool",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -2320,
+        944
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "UrW4h45EJV7CGN9A",
+          "name": "Pinecone account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "qwert",
+          "mode": "list",
+          "cachedResultName": "qwert"
+        },
+        "embeddingBatchSize": 100,
+        "options": {}
+      },
+      "id": "5a49db19-8f5c-4c4e-ac69-d6ee909f5c57",
+      "name": "Insert to Pinecone Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        -64,
+        260
+      ],
+      "credentials": {
+        "pineconeApi": {
+          "id": "WHFdYoAlcGSTTyIz",
+          "name": "Pinecone account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -544,
+        848
+      ],
+      "id": "fd37b895-ee4f-4e1e-8b5b-6b153da1d4aa",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $(\"Edit Fields Telegram\").item.json.chat_id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              },
+              "id": "531bdc9b-deab-40b6-b85f-1a447907865e"
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "f2708b03-0925-4d07-8319-5f588b6c2014",
+      "name": "Send Response1",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "data uploaded, ask your questions!",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Access-Control-Allow-Methods",
+                "value": "POST, OPTIONS"
+              },
+              {
+                "name": "Access-Control-Allow-Headers",
+                "value": "Content-Type"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        624,
+        260
+      ],
+      "id": "14852592-e5bb-48e2-89d7-7d148dd5d4d6",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "загружаю документы...",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1320,
+        -96
+      ],
+      "id": "1249b5a1-2ab7-42c1-96e9-ce77230bfe7a",
+      "name": "Send a text message1",
+      "webhookId": "1081970b-ec77-42fa-850a-11651cf9b2b1",
+      "retryOnFail": false,
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        1176
+      ],
+      "id": "36171b94-bf82-4c97-bea1-bd417e1de998",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id ?? $json.message?.chat?.id ?? 768353663 }}",
+        "text": "={{ $json.execution.error.message }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1968,
+        1176
+      ],
+      "id": "e73fe479-47d3-4804-bd78-a07c1043c5b5",
+      "name": "Send a text message2",
+      "webhookId": "3acc4b18-0c79-49fe-967c-88d22b6f40b0",
+      "retryOnFail": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 3
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -1320,
+        896
+      ],
+      "id": "e89acc1a-6f91-4819-961d-b6d80a6a7ca9",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp",
+          "mode": "list",
+          "cachedResultName": "pampampam",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp"
+        },
+        "event": "fileUpdated",
+        "options": {}
+      },
+      "id": "138ddd56-0d39-48ba-b4d3-36244d458249",
+      "name": "Google Drive Trigger",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        -512
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "EdOAzsdOGCBqFLSp",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "768353663",
+        "text": "=Состав документов изменен!\n\nФайл: {{ $json.name }}\nТип: {{ $json.mimeType }}",
+        "additionalFields": {}
+      },
+      "id": "46662df3-827c-4628-ace1-c6b0c5ae2564",
+      "name": "Notify Document Change",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -1968,
+        -416
+      ],
+      "webhookId": "3d7398f6-78e7-43cb-820b-962e3cfe2781",
+      "credentials": {
+        "telegramApi": {
+          "id": "LKiw00kHry29ssyl",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {}
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp",
+          "mode": "list",
+          "cachedResultName": "pampampam",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/178e6wrGDqoaKaS6pKo_oB3EEhh23nkGp"
+        },
+        "event": "={{ \"fileCreated\" }}",
+        "options": {}
+      },
+      "id": "5629c87d-df1c-45c9-b297-dc448ab9595a",
+      "name": "Google Drive Trigger2",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2192,
+        -320
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "EdOAzsdOGCBqFLSp",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19711cec-e51a-41ab-bbbc-f83231fb7166",
+              "name": "source",
+              "value": "telegram",
+              "type": "string"
+            },
+            {
+              "id": "e056d4b8-daaf-4240-bb6e-00cfd1691508",
+              "name": "text",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "f1a2b3c4-d5e6-7890-abcd-ef1234567890",
+              "name": "chat_id",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0e0f663e-61c8-4c22-b776-7bac4eb35cb3",
+      "name": "Edit Fields Telegram",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1968,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.text }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "/start",
+              "id": "d25e5b69-b101-489c-a7d2-804665bf3bbe"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "269b2c2f-bc23-4e11-9665-e4795b04cc24",
+      "name": "Check /start Command Telegram",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1744,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant that answers questions based on the provided documents. Use the Pinecone Retriever Tool to search for relevant information in the knowledge base. Always provide accurate answers based ONLY on the retrieved context. Answer no more 100 words. Always respond in the SAME language the user used.  Always mention the document you took information from."
+        }
+      },
+      "id": "a5928f3d-de71-47dc-be55-588f2e857b2e",
+      "name": "AI Agent Telegram",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1464,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "19711cec-e51a-41ab-bbbc-f83231fb7166",
+              "name": "source",
+              "value": "web",
+              "type": "string"
+            },
+            {
+              "id": "e056d4b8-daaf-4240-bb6e-00cfd1691508",
+              "name": "text",
+              "value": "={{ $json.body.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "33295ab8-cdf5-4445-a6cc-68954e2e0fd9",
+      "name": "Edit Fields Webhook",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1744,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.text }}",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "rightValue": "/start",
+              "id": "d25e5b69-b101-489c-a7d2-804665bf3bbe"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e7c69cf1-f958-44c4-96b7-bdab84433895",
+      "name": "Check /start Command Webhook",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -1312,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "You are a helpful assistant that answers questions based on the provided documents. Use the Pinecone Retriever Tool to search for relevant information in the knowledge base. Always provide accurate answers based ONLY on the retrieved context. Answer no more 100 words. Always respond in the SAME language the user used.  Always mention the document you took information from."
+        }
+      },
+      "id": "80677b8b-8876-468f-acd2-170d5902f972",
+      "name": "AI Agent Webhook",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -992,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.chat_id }}"
+      },
+      "id": "eba1d865-e3a1-42e2-aeb0-896d44f6d7e7",
+      "name": "Chat Memory Telegram",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1344,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "web_session"
+      },
+      "id": "c5936105-fd09-49a6-818a-bb654adfaced",
+      "name": "Chat Memory Webhook",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -824,
+        1072
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Google Drive Files": {
+      "main": [
+        [
+          {
+            "node": "Split Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Files": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Insert to Pinecone Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Document Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Insert to Pinecone Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Insert to Pinecone Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Document Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Retriever Tool",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Telegram",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent Webhook",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Pinecone Retriever Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent Telegram",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "AI Agent Webhook",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert to Pinecone Store": {
+      "main": [
+        [
+          {
+            "node": "Send Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Response1": {
+      "main": [
+        [
+          {
+            "node": "Send Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        [
+          {
+            "node": "Search Google Drive Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Search Google Drive Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Notify Document Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Notify Document Change",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Telegram": {
+      "main": [
+        [
+          {
+            "node": "Check /start Command Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check /start Command Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Telegram": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields Webhook": {
+      "main": [
+        [
+          {
+            "node": "Check /start Command Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check /start Command Webhook": {
+      "main": [
+        [
+          {
+            "node": "Search Google Drive Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Webhook": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory Telegram": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Telegram",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat Memory Webhook": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent Webhook",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "e97c7e9a-84bc-4ed3-aca8-47421aee595b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "054569f0104fb51c6ce1f6fd77f14621c1a557b78e42801b41ba2b69ef64adaa"
+  },
+  "id": "FiHytcFvl1WfNT1S",
+  "tags": []
+}
